@@ -1,11 +1,15 @@
+// Entry file that mounts the React app on the root div inside index.html.
+// I used React.StrictMode to ensure clean rendering and better debugging.
+
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import "./index.css";
 
-// Create the root of the app and render <App /> inside the div#root in index.html
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
+
