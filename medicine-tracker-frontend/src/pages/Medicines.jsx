@@ -1,26 +1,24 @@
-// Medicines.jsx
-// Lists all medicines across pharmacies, with search and animated UI
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import "../styles/global.css";
 
 const Medicines = () => {
   const [medicines, setMedicines] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchMedicines = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/pharmacies");
-        const data = res.data;
-
-        // Extract all medicines from pharmacies
-        const allMedicines = [];
-        data.forEach((pharmacy) => {
+        const all = [];
+        res.data.forEach((pharmacy) => {
           pharmacy.medicines.forEach((m) => {
-            allMedicines.push({
+            all.push({
               ...m,
               pharmacyName: pharmacy.name,
               contact: pharmacy.contact,
@@ -28,10 +26,9 @@ const Medicines = () => {
             });
           });
         });
-
-        setMedicines(allMedicines);
-      } catch (error) {
-        console.error("Error fetching medicines:", error);
+        setMedicines(all);
+      } catch (err) {
+        console.error("Error fetching medicines:", err);
       } finally {
         setLoading(false);
       }
@@ -39,22 +36,17 @@ const Medicines = () => {
     fetchMedicines();
   }, []);
 
-  // Filter medicines based on search input
   const filtered = medicines.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="medicines-page fade-in">
-      {/* ===== Header Section ===== */}
       <header className="page-header slide-down">
         <h1>💊 Medicines Directory</h1>
-        <p>
-          Search and view all available medicines with their stock and prices across pharmacies.
-        </p>
+        <p>Browse available medicines with prices and pharmacy details.</p>
       </header>
 
-      {/* ===== Search Section ===== */}
       <div className="search-section fade-up">
         <input
           type="text"
@@ -65,10 +57,8 @@ const Medicines = () => {
         />
       </div>
 
-      {/* ===== Loading State ===== */}
       {loading && <p className="loading-text">Loading medicines...</p>}
 
-      {/* ===== Medicines List ===== */}
       <section className="medicines-grid fade-up">
         {filtered.length === 0 && !loading ? (
           <p className="no-results">No medicines found.</p>
@@ -76,16 +66,20 @@ const Medicines = () => {
           filtered.map((med, index) => (
             <div key={index} className="medicine-card">
               <h3>{med.name}</h3>
-              <p>
-                <strong>Pharmacy:</strong> {med.pharmacyName}
-              </p>
-              <p>
-                <strong>Qty:</strong> {med.quantity} | <strong>Price:</strong> ₹{med.price}
-              </p>
-              <p>
-                <strong>Contact:</strong> {med.contact}
-              </p>
+              <p><strong>Pharmacy:</strong> {med.pharmacyName}</p>
+              <p><strong>Qty:</strong> {med.quantity} | <strong>Price:</strong> ₹{med.price}</p>
+              <p><strong>Contact:</strong> {med.contact}</p>
               <p className="address">{med.address}</p>
+
+              {/* Add to Cart visible only for customers */}
+              {user?.role === "customer" && (
+                <button
+                  className="add-cart-btn"
+                  onClick={() => addToCart(med)}
+                >
+                  🛒 Add to Cart
+                </button>
+              )}
             </div>
           ))
         )}

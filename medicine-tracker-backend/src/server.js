@@ -4,6 +4,8 @@ import dotenv from "dotenv";            // Load .env variables
 import cors from "cors";                // Allow frontend to access backend
 import connectDB from "./config/db.js"; // MongoDB connection logic
 import pharmacyRoutes from "./routes/pharmacyRoutes.js"; // Pharmacy routes
+import authRoutes from "./routes/authRoutes.js";
+
 
 // Load environment variables early
 dotenv.config();
@@ -17,6 +19,8 @@ app.use(express.json());   // Parse JSON request bodies
 
 // ---------- API Routes ----------
 app.use("/api/pharmacies", pharmacyRoutes); // All pharmacy routes
+app.use("/api/auth", authRoutes);
+
 
 // ---------- Test Route ----------
 app.get("/", (req, res) => {

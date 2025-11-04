@@ -1,126 +1,76 @@
-// Navbar.jsx
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
-import axios from "axios";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/global.css";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
-  const [showSearch, setShowSearch] = useState(false);
-  const [query, setQuery] = useState("");
-  const [medicines, setMedicines] = useState([]);
-  const [results, setResults] = useState([]);
-  const searchRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { cart } = useCart();
 
-  useEffect(() => {
-    // Fetch pharmacy + medicine data once for search
-    const fetchData = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/pharmacies");
-        const allMedicines = [];
-        res.data.forEach((pharmacy) => {
-          pharmacy.medicines.forEach((m) => {
-            allMedicines.push({
-              ...m,
-              pharmacyName: pharmacy.name,
-              contact: pharmacy.contact,
-              address: pharmacy.address,
-            });
-          });
-        });
-        setMedicines(allMedicines);
-      } catch (error) {
-        console.error("Error fetching medicines:", error);
-      }
-    };
-    fetchData();
-  }, []);
-
-  // Filter medicines dynamically
-  useEffect(() => {
-    if (query.trim() === "") {
-      setResults([]);
-      return;
-    }
-    const filtered = medicines.filter((m) =>
-      m.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setResults(filtered);
-  }, [query, medicines]);
-
-  // Close search when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowSearch(false);
-        setQuery("");
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  const handleLogout = () => {
+    logout();
+    alert("Logged out successfully ✅");
+    navigate("/login");
+  };
 
   return (
     <nav className="navbar">
       <div className="nav-left">
-        <span className="logo">💊 Medicine Tracker</span>
+        <span className="logo" onClick={() => navigate("/")}>
+          💊 Medicine Tracker
+        </span>
       </div>
 
-      <div className="nav-right" ref={searchRef}>
+      <div className="nav-center">
         <Link to="/" className={location.pathname === "/" ? "active" : ""}>
           Dashboard
         </Link>
-        <Link
-          to="/pharmacies"
-          className={location.pathname === "/pharmacies" ? "active" : ""}
-        >
-          Pharmacies
-        </Link>
+
+        {/* Pharmacies → Admin only */}
+        {user?.role === "admin" && (
+          <Link
+            to="/pharmacies"
+            className={location.pathname === "/pharmacies" ? "active" : ""}
+          >
+            Pharmacies
+          </Link>
+        )}
+
+        {/* Medicines → Everyone */}
         <Link
           to="/medicines"
           className={location.pathname === "/medicines" ? "active" : ""}
         >
           Medicines
         </Link>
+      </div>
 
-        {/* 🔍 Search icon toggle */}
-        {!showSearch && (
-          <button
-            className="search-icon-btn"
-            onClick={() => setShowSearch(true)}
-          >
-            🔍
-          </button>
-        )}
+      <div className="nav-right">
+        {user ? (
+          <>
+            <span className="user-info">
+              👤 {user.name || "User"} ({user.role})
+            </span>
 
-        {/* Search input inline */}
-        {showSearch && (
-          <div className="inline-search fade-in">
-            <input
-              type="text"
-              placeholder="Search medicine..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoFocus
-            />
-            <button onClick={() => setShowSearch(false)} className="close-icon">
-              ✖
-            </button>
-
-            {/* Dropdown Results */}
-            {results.length > 0 && (
-              <div className="search-dropdown">
-                {results.slice(0, 5).map((r, i) => (
-                  <div key={i} className="search-item">
-                    <strong>{r.name}</strong>
-                    <p>
-                      {r.pharmacyName} — ₹{r.price} | Qty: {r.quantity}
-                    </p>
-                  </div>
-                ))}
-              </div>
+            {/* Cart visible only for customers */}
+            {user.role === "customer" && (
+              <Link to="/cart" className="cart-icon">
+                🛒 Cart {cart.length > 0 && <span className="cart-count">{cart.length}</span>}
+              </Link>
             )}
-          </div>
+
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className={location.pathname === "/login" ? "active" : ""}>Login</Link>
+            <Link to="/register" className={location.pathname === "/register" ? "active" : ""}>Register</Link>
+          </>
         )}
       </div>
     </nav>
