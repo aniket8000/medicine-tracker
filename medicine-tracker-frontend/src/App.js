@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import "./styles/global.css";
 import { useAuth } from "./context/AuthContext";
+import Checkout from "./pages/Checkout";
 
 // ✅ Protected Route Wrapper
 const PrivateRoute = ({ children }) => {
@@ -50,6 +51,15 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+  path="/checkout"
+  element={
+    <PrivateRoute>
+      <Checkout />
+    </PrivateRoute>
+  }
+/>
+
         </Routes>
       </main>
     </Router>
