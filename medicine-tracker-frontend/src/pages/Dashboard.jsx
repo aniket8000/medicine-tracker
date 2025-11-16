@@ -10,10 +10,11 @@ const Dashboard = () => {
       {/* ======= Hero Section ======= */}
       <section className="hero-section slide-down">
         <h1>
-          Welcome to <span className="highlight">Medicine Tracker</span>
+          Welcome to <span className="highlight">MedFinder</span>
         </h1>
         <p>
-          Manage pharmacies, medicines, and availability — all in one simple dashboard.
+          Manage pharmacies, medicines, and availability — all in one simple
+          dashboard.
         </p>
         <button className="hero-btn" onClick={() => navigate("/pharmacies")}>
           Get Started
@@ -37,15 +38,20 @@ const Dashboard = () => {
           <h3>💊 Medicines</h3>
           <p>Track and update medicine data across multiple stores.</p>
         </div>
+
+        <div className="stat-card clickable" onClick={() => navigate("/map")}>
+          <h3>🗺️ Map Search</h3>
+          <p>Locate nearby pharmacies directly through an interactive map.</p>
+        </div>
       </section>
 
       {/* ======= About Section ======= */}
       <section className="info-section fade-up">
         <h2>💡 About Us</h2>
         <p>
-          Medicine Tracker is a simple web app that helps users find medicines
-          quickly and lets pharmacy owners manage inventory easily. Our goal is
-          to make healthcare access faster, smarter, and more organized.
+          MedFinder helps users find medicines quickly and lets pharmacy
+          owners manage inventory easily. Our goal is to make healthcare access
+          faster, smarter, and more organized.
         </p>
       </section>
     </div>
@@ -53,3 +59,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+

@@ -8,9 +8,10 @@ import Search from "./pages/Search";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Checkout from "./pages/Checkout";
+import MapView from "./pages/MapView"; // ✅ new map page
 import "./styles/global.css";
 import { useAuth } from "./context/AuthContext";
-import Checkout from "./pages/Checkout";
 
 // ✅ Protected Route Wrapper
 const PrivateRoute = ({ children }) => {
@@ -26,13 +27,14 @@ function App() {
       <Navbar />
       <main className="main-container">
         <Routes>
-          {/* Public Routes */}
+          {/* ===== Public Routes ===== */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/pharmacies" element={<Pharmacies />} />
           <Route path="/medicines" element={<Medicines />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/map" element={<MapView />} /> {/* ✅ Map route */}
 
-          {/* Auth Routes */}
+          {/* ===== Auth Routes ===== */}
           <Route
             path="/login"
             element={user ? <Navigate to="/" /> : <Login />}
@@ -42,7 +44,7 @@ function App() {
             element={user ? <Navigate to="/" /> : <Register />}
           />
 
-          {/* Protected Route for Cart */}
+          {/* ===== Protected Routes ===== */}
           <Route
             path="/cart"
             element={
@@ -52,14 +54,16 @@ function App() {
             }
           />
           <Route
-  path="/checkout"
-  element={
-    <PrivateRoute>
-      <Checkout />
-    </PrivateRoute>
-  }
-/>
+            path="/checkout"
+            element={
+              <PrivateRoute>
+                <Checkout />
+              </PrivateRoute>
+            }
+          />
 
+          {/* Catch-All Redirect */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
     </Router>

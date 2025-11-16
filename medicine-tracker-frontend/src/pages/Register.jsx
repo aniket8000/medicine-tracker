@@ -11,8 +11,15 @@ const Register = () => {
     password: "",
     role: "customer",
   });
+
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2000);
+  };
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -25,27 +32,31 @@ const Register = () => {
         form
       );
 
-      alert("Registration successful ✅");
+      showToast("Registered successfully 🎉");
 
-      // ✅ Auto-login right after registration
       const userData = {
-        name: res.data.name || form.name,
-        email: res.data.email || form.email,
-        role: res.data.role || form.role,
-        token: res.data.token || null,
+        name: res.data.name,
+        email: res.data.email,
+        role: res.data.role,
+        token: res.data.token,
       };
+
       login(userData);
 
-      navigate("/");
+      setTimeout(() => navigate("/"), 1200);
     } catch (error) {
-      console.error("Registration failed:", error.response?.data || error.message);
-      alert("Registration failed ❌");
+      console.error("Registration failed:", error);
+      showToast("Registration failed ❌");
     }
   };
 
   return (
     <div className="auth-page fade-in">
       <h2>🧍 Register</h2>
+
+      {/* Toast UI */}
+      {toast && <div className="toast-box">{toast}</div>}
+
       <form onSubmit={handleSubmit} className="auth-form">
         <input
           name="name"
@@ -54,6 +65,7 @@ const Register = () => {
           onChange={handleChange}
           required
         />
+
         <input
           name="email"
           type="email"
@@ -62,6 +74,7 @@ const Register = () => {
           onChange={handleChange}
           required
         />
+
         <input
           name="password"
           type="password"
@@ -70,13 +83,16 @@ const Register = () => {
           onChange={handleChange}
           required
         />
+
         <select name="role" value={form.role} onChange={handleChange}>
           <option value="customer">Customer</option>
           <option value="admin">Admin</option>
         </select>
+
         <button type="submit" className="primary-btn">
           Register
         </button>
+
         <p className="auth-switch">
           Already have an account? <a href="/login">Login</a>
         </p>

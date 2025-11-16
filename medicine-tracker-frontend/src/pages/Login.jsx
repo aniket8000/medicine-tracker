@@ -9,6 +9,12 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [toast, setToast] = useState("");
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2000);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,26 +24,32 @@ const Login = () => {
         password,
       });
 
-      // ✅ Ensure we always have the correct data shape
+      // ================
+      // FIXED: NORMALIZED USER DATA
+      // ================
       const userData = {
         name: res.data.name || "User",
         email: res.data.email,
-        role: res.data.role || "customer", // fallback
+        role: res.data.role || "admin", // <--- IMPORTANT FIX
         token: res.data.token || null,
       };
 
       login(userData);
-      alert(`Login successful ✅ (${userData.role})`);
-      navigate("/");
+      showToast("Login successful 🎉");
+
+      setTimeout(() => navigate("/"), 1200);
     } catch (error) {
-      console.error("Login error:", error.response?.data || error.message);
-      alert("Invalid credentials ❌");
+      showToast("Invalid credentials ❌");
+      console.error(error);
     }
   };
 
   return (
     <div className="auth-page fade-in">
       <h2>🔐 Login</h2>
+
+      {toast && <div className="toast-box">{toast}</div>}
+
       <form onSubmit={handleSubmit} className="auth-form">
         <input
           type="email"
@@ -46,6 +58,7 @@ const Login = () => {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -53,9 +66,11 @@ const Login = () => {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
         <button type="submit" className="primary-btn">
           Login
         </button>
+
         <p className="auth-switch">
           Don’t have an account? <a href="/register">Register</a>
         </p>
