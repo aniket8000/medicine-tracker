@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useCart } from "../context/CartContext";
 import "../styles/global.css";
-import axios from "axios";
+import api from "../api/axios";
 
 const Checkout = () => {
   const { cart, clearCart } = useCart();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ name: "", address: "", contact: "" });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [orderError, setOrderError] = useState("");
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -24,26 +26,33 @@ const Checkout = () => {
 
   const handleConfirm = async () => {
     setIsProcessing(true);
-    setTimeout(async () => {
-      try {
-        await axios.post("http://localhost:5000/api/orders", {
-          user: form.name,
-          contact: form.contact,
-          address: form.address,
-          items: cart,
-          total: cart.reduce(
-            (sum, item) => sum + item.price * (item.quantity || 1),
-            0
-          ),
-        });
-      } catch (err) {
-        console.error("Order save failed:", err.message);
-      }
+    setOrderError("");
+    try {
+      const res = await api.post("/orders", {
+        name: form.name,
+        contact: form.contact,
+        address: form.address,
+        items: cart.map((item) => ({
+          name: item.name,
+          pharmacyName: item.pharmacyName,
+          quantity: item.quantity || 1,
+          price: item.price,
+        })),
+        total: cart.reduce(
+          (sum, item) => sum + item.price * (item.quantity || 1),
+          0
+        ),
+      });
 
+      setConfirmedOrder(res.data);
       setStep(3);
-      setIsProcessing(false);
       clearCart();
-    }, 2000);
+    } catch (err) {
+      console.error("Order save failed:", err.message);
+      setOrderError("Something went wrong placing your order. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -110,6 +119,9 @@ const Checkout = () => {
               0
             )}
           </h3>
+
+          {orderError && <p className="message error">{orderError}</p>}
+
           <div style={{ marginTop: "20px" }}>
             <button className="secondary-btn" onClick={() => setStep(1)}>
               ⬅️ Back
@@ -128,8 +140,16 @@ const Checkout = () => {
       {step === 3 && (
         <div className="checkout-success fade-up">
           <div className="success-animation">🎉</div>
-          <h2>Thank You for Your Purchase!</h2>
-          <p>Your order has been placed successfully.</p>
+          <h2>Order Confirmed!</h2>
+          {confirmedOrder?._id && (
+            <p className="order-id">
+              Order #{confirmedOrder._id.slice(-8).toUpperCase()}
+            </p>
+          )}
+          <p>
+            A confirmation email is on its way. Thanks for shopping with
+            MedFinder!
+          </p>
           <button
             className="primary-btn"
             onClick={() => (window.location.href = "/")}

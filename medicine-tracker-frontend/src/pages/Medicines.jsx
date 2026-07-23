@@ -1,11 +1,15 @@
 // Medicines.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import Fuse from "fuse.js";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import AddToCartModal from "../components/AddToCartModal";
+import Pagination from "../components/Pagination";
+import Modal from "../components/Modal";
 import "../styles/global.css";
+
+const PAGE_SIZE = 12;
 
 const Medicines = () => {
   const [allMedicines, setAllMedicines] = useState([]);
@@ -18,6 +22,7 @@ const Medicines = () => {
   });
   const [loading, setLoading] = useState(true);
   const [selectedMedicine, setSelectedMedicine] = useState(null);
+  const [page, setPage] = useState(1);
 
   // NEW → For Delete Modal
   const [deleteModal, setDeleteModal] = useState({
@@ -32,7 +37,7 @@ const Medicines = () => {
   // Fetch medicines
   const fetchMedicines = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/pharmacies");
+      const res = await api.get("/pharmacies");
       const data = res.data;
 
       const all = [];
@@ -92,6 +97,7 @@ const Medicines = () => {
     if (filters.inStockOnly) results = results.filter((m) => m.quantity > 0);
 
     setFilteredMedicines(results);
+    setPage(1);
   }, [search, filters, allMedicines]);
 
   // Customer Add to Cart
@@ -112,9 +118,7 @@ const Medicines = () => {
     try {
       const { pharmacyId, medName } = deleteModal;
 
-      await axios.delete(
-        `http://localhost:5000/api/pharmacies/${pharmacyId}/medicine/${medName}`
-      );
+      await api.delete(`/pharmacies/${pharmacyId}/medicine/${medName}`);
 
       setDeleteModal({ visible: false, medName: "", pharmacyId: "" });
 
@@ -124,6 +128,12 @@ const Medicines = () => {
       console.error(error);
     }
   };
+
+  const totalPages = Math.ceil(filteredMedicines.length / PAGE_SIZE);
+  const paginatedMedicines = filteredMedicines.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   return (
     <div className="medicines-page fade-in">
@@ -139,7 +149,7 @@ const Medicines = () => {
           placeholder="🔍 Search medicine..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="search-bar"
+          className="meds-search-input"
         />
 
         <select
@@ -180,11 +190,16 @@ const Medicines = () => {
       {loading ? (
         <p className="loading-text">Loading medicines...</p>
       ) : filteredMedicines.length === 0 ? (
-        <p className="no-results">No medicines found.</p>
+        <div className="empty-state fade-up">
+          <div className="empty-icon">💊</div>
+          <h3>No medicines found</h3>
+          <p>Try adjusting your search or filters.</p>
+        </div>
       ) : (
+        <>
         <section className="medicines-grid fade-up">
-          {filteredMedicines.map((med, index) => (
-            <div key={index} className="medicine-card">
+          {paginatedMedicines.map((med, index) => (
+            <div key={`${med.pharmacyId}-${med.name}-${index}`} className="medicine-card">
               <h3>{med.name}</h3>
 
               <p><strong>Pharmacy:</strong> {med.pharmacyName}</p>
@@ -221,6 +236,8 @@ const Medicines = () => {
             </div>
           ))}
         </section>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
 
       {/* Add to Cart Modal */}
@@ -234,66 +251,28 @@ const Medicines = () => {
 
       {/* DELETE MEDICINE MODAL */}
       {deleteModal.visible && (
-        <div
-          className="modal-overlay"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 5000,
-          }}
+        <Modal
+          onClose={() => setDeleteModal({ visible: false, medName: "", pharmacyId: "" })}
+          contentStyle={{ width: "300px", textAlign: "center" }}
         >
-          <div
-            className="modal-content"
-            style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "10px",
-              width: "300px",
-              textAlign: "center",
-            }}
-          >
-            <h3>Delete Medicine?</h3>
-            <p>{deleteModal.medName}</p>
+          <h3>Delete Medicine?</h3>
+          <p>{deleteModal.medName}</p>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-around",
-                marginTop: "20px",
-              }}
+          <div className="modal-actions" style={{ justifyContent: "space-around" }}>
+            <button
+              onClick={() =>
+                setDeleteModal({ visible: false, medName: "", pharmacyId: "" })
+              }
+              className="secondary-btn"
             >
-              <button
-                onClick={() =>
-                  setDeleteModal({ visible: false, medName: "", pharmacyId: "" })
-                }
-                style={{
-                  padding: "6px 12px",
-                  background: "gray",
-                  color: "white",
-                  borderRadius: "6px",
-                }}
-              >
-                Cancel
-              </button>
+              Cancel
+            </button>
 
-              <button
-                onClick={confirmDelete}
-                style={{
-                  padding: "6px 12px",
-                  background: "#d11a2a",
-                  color: "white",
-                  borderRadius: "6px",
-                }}
-              >
-                Delete
-              </button>
-            </div>
+            <button onClick={confirmDelete} className="delete-btn">
+              Delete
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

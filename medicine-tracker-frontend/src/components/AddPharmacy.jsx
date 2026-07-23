@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 const AddPharmacy = ({ onAddSuccess }) => {
@@ -8,7 +8,7 @@ const AddPharmacy = ({ onAddSuccess }) => {
   const [medicines, setMedicines] = useState([{ name: "", quantity: "", price: "" }]);
   const [message, setMessage] = useState("");
 
-  // 🚫 Restrict access for non-admins
+  // Restrict access for non-admins
   if (!user || user.role !== "admin") {
     return (
       <div style={{ textAlign: "center", marginTop: "40px" }}>
@@ -33,7 +33,7 @@ const AddPharmacy = ({ onAddSuccess }) => {
     e.preventDefault();
     try {
       const newPharmacy = { ...form, medicines };
-      await axios.post("http://localhost:5000/api/pharmacies", newPharmacy);
+      await api.post("/pharmacies", newPharmacy);
       setMessage("Pharmacy added successfully ✅");
       setForm({ name: "", address: "", contact: "" });
       setMedicines([{ name: "", quantity: "", price: "" }]);

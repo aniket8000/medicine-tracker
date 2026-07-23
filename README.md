@@ -13,7 +13,7 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 - The platform detects nearby pharmacies automatically using GPS + OpenStreetMap
 
-- Real-time cart & checkout flow
+- Real-time cart, checkout, and order confirmation flow (with email receipts)
 
 - Admins can add/edit/delete pharmacies and manage all medicine stock
 
@@ -31,6 +31,8 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 - Quick view of pharmacy address & contact details
 
+- Paginated results (12 per page) for browsing large catalogs
+
 
 
 #### 🏪 Pharmacy Management (Admin)
@@ -43,6 +45,8 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 - Delete pharmacy with confirmation flow
 
+- All write actions require an authenticated admin (JWT + role check)
+
 
 
 #### 🛒 Customer Shopping Flow
@@ -53,7 +57,9 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 - Remove items / clear cart
 
-- Smooth checkout experience
+- Full checkout flow backed by a real `Order` model — orders are saved, not just simulated
+
+- Order confirmation screen shows a real order ID, plus an emailed receipt
 
 
 
@@ -61,28 +67,44 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 - Auto-detects user's location
 
-- Loads pharmacies within a 5km radius
+- Loads pharmacies within a 5km radius via OpenStreetMap Overpass API
 
 - Sorts by distance
 
-- Click to open directions in Google Maps
+- Click to open directions in Google Maps, using your real GPS coordinates as the route origin
 
 - Interactive map using Leaflet + OpenStreetMap
 
 
-#### 👤 Authentication
+#### 👤 Authentication & Security
 
-- Login & Register
+- Login & Register with JWT-based sessions
 
-- Role-based UI (Admin vs Customer)
+- Role-based UI and route protection (Admin vs Customer) — core pages require login, Map/Contact stay public
 
-- Persistent session stored in localStorage
+- Session is verified against the backend on every app load (a stale/invalid token is silently logged out, not trusted blindly)
+
+- Forgot/Reset password flow with real email delivery (Nodemailer + Gmail SMTP)
+
+- Backend input validation (`express-validator`) on all auth, pharmacy, and order routes
+
+- CORS restricted to the configured frontend origin, plus API rate limiting (with a stricter cap on auth endpoints to slow brute-force attempts)
+
+#### 📩 Contact & Info Pages
+
+- About Us, Contact Support, and Privacy Policy pages, linked from both the navbar and footer
+
+- Contact form sends a real email to the site admin via the same Gmail SMTP integration
 
 #### 🎨 Clean UI/UX
 
 - Modern animations, hover effects, transitions
 
-- Dashboard landing page
+- Full landing-page style Dashboard (features, how-it-works, live stats pulled from the database, CTA)
+
+- Light/dark theme toggle (persisted per browser)
+
+- Accessible modals: Escape-to-close and focus-trapping
 
 - Responsive layout
 
@@ -92,23 +114,33 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 #### Frontend
 
-- React (Vite)
+- React (Create React App / `react-scripts`)
+
+- React Router
 
 - Context API (Auth, Cart, Map)
 
-- Axios
+- Axios (single shared instance with auth-token interceptor)
 
-- Leaflet (Maps)
+- Leaflet + React-Leaflet (Maps)
 
-- Tailored CSS animations & transitions
+- Fuse.js (fuzzy search)
+
+- Tailored CSS design system (custom properties for light/dark theming, animations, transitions)
 
 #### Backend
 
-- Node.js
+- Node.js + Express
 
-- Express
+- MongoDB (Atlas or local) via Mongoose
 
-- MongoDB (Atlas / Local)
+- JWT auth (`jsonwebtoken`, `bcryptjs`)
+
+- `express-validator` for request validation
+
+- `express-rate-limit` for abuse protection
+
+- `nodemailer` for password-reset, order-confirmation, and contact-form emails
 
 ---
 
@@ -116,41 +148,54 @@ Admins get full control over pharmacy inventory, while customers enjoy a fast an
 
 #### 1️⃣ Clone the repository
 ```
-git clone https://github.com/your-username/medfinder.git
-cd medfinder
+git clone https://github.com/aniket8000/medicine-tracker.git
+cd medicine-tracker
 ```
 
 
 #### 2️⃣ Backend Setup
 ```
-cd backend
+cd medicine-tracker-backend
 npm install
 npm start
 ```
 
-
 Default URL:
 http://localhost:5000
 
-
-#### Environment variables (backend/.env):
+#### Environment variables (`medicine-tracker-backend/.env`):
 ```
 PORT=5000
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret
+FRONTEND_URL=http://localhost:3000
+EMAIL_USER=your_gmail_address
+EMAIL_PASS=your_gmail_app_password
 ```
+
+`EMAIL_USER`/`EMAIL_PASS` power password-reset, order-confirmation, and contact-form emails via Gmail SMTP — generate an App Password at https://myaccount.google.com/apppasswords (requires 2-Step Verification on the account).
+
+#### Optional: Seed demo data
+```
+npm run seed
+```
+Wipes existing pharmacies and inserts 100+ demo pharmacies stocked with 100+ real-sounding medicines across Delhi-NCR, for a realistic browsing experience.
 
 
 #### 3️⃣ Frontend Setup
 ```
-cd frontend
+cd medicine-tracker-frontend
 npm install
-npm run dev
+npm start
 ```
 
-
 Frontend runs on:
-http://localhost:5173
+http://localhost:3000
+
+#### Environment variables (`medicine-tracker-frontend/.env`):
+```
+REACT_APP_API_URL=http://localhost:5000/api
+```
 
 ---
 
@@ -158,13 +203,13 @@ http://localhost:5173
 
 - Role-based UI: Customer sees cart; admin sees management tools
 
-- Local caching: Cart + Auth stored in localStorage
+- Local caching: Cart + Auth stored in localStorage; auth session is re-verified against the backend on load
 
-- Error-safe UX: Toasts for login, logout, cart, CRUD actions
+- Error-safe UX: Toasts and inline messages for login, logout, cart, and CRUD actions
 
-- Reusable components: PharmacyCard, AddToCartModal, MapContext
+- Reusable components: `PharmacyCard`, `AddToCartModal`, `Modal` (accessible dialog wrapper), `Pagination`, `MapContext`
 
-- Scalable architecture: Easy to expand into ordering, delivery, or pharmacy onboarding flows
+- Scalable architecture: Easy to expand into order history views, payment gateway integration, or pharmacy onboarding flows
 
 ---
 

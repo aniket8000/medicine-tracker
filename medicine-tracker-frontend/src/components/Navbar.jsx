@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/global.css";
 import { useAuth } from "../context/AuthContext";
@@ -9,6 +9,18 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { cart } = useCart();
+
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
   // Toast function (same style used in delete confirmation)
   const showToast = (msg) => {
@@ -39,23 +51,27 @@ const Navbar = () => {
 
       {/* ===== Center (Navigation Links) ===== */}
       <div className="nav-center">
-        <Link to="/" className={location.pathname === "/" ? "active" : ""}>
-          Dashboard
-        </Link>
+        {user && (
+          <>
+            <Link to="/" className={location.pathname === "/" ? "active" : ""}>
+              Dashboard
+            </Link>
 
-        <Link
-          to="/pharmacies"
-          className={location.pathname === "/pharmacies" ? "active" : ""}
-        >
-          Pharmacies
-        </Link>
+            <Link
+              to="/pharmacies"
+              className={location.pathname === "/pharmacies" ? "active" : ""}
+            >
+              Pharmacies
+            </Link>
 
-        <Link
-          to="/medicines"
-          className={location.pathname === "/medicines" ? "active" : ""}
-        >
-          Medicines
-        </Link>
+            <Link
+              to="/medicines"
+              className={location.pathname === "/medicines" ? "active" : ""}
+            >
+              Medicines
+            </Link>
+          </>
+        )}
 
         <Link
           to="/map"
@@ -63,10 +79,25 @@ const Navbar = () => {
         >
           🗺️ Map
         </Link>
+
+        <Link
+          to="/contact"
+          className={location.pathname === "/contact" ? "active" : ""}
+        >
+          📩 Contact
+        </Link>
       </div>
 
       {/* ===== Right ===== */}
       <div className="nav-right">
+        <button
+          className="theme-toggle"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+        >
+          {theme === "light" ? "🌙" : "☀️"}
+        </button>
+
         {user ? (
           <>
             <span className="user-info">

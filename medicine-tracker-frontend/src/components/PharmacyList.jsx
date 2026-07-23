@@ -1,21 +1,27 @@
 // PharmacyList.jsx
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import PharmacyCard from "./PharmacyCard";
+import Pagination from "./Pagination";
+import Modal from "./Modal";
 import { useAuth } from "../context/AuthContext";
+
+const PAGE_SIZE = 12;
 
 const PharmacyList = ({ refreshKey = 0, onUpdate }) => {
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editData, setEditData] = useState(null);
+  const [page, setPage] = useState(1);
   const { user } = useAuth();
 
   const fetchPharmacies = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/pharmacies");
+      const res = await api.get("/pharmacies");
       setPharmacies(res.data);
+      setPage(1);
     } catch (err) {
       setError("Failed to load pharmacies.");
     } finally {
@@ -30,7 +36,7 @@ const PharmacyList = ({ refreshKey = 0, onUpdate }) => {
   // DELETE pharmacy
   const deletePharmacy = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/pharmacies/${id}`);
+      await api.delete(`/pharmacies/${id}`);
       fetchPharmacies(); // refresh UI
     } catch (err) {
       console.error(err);
@@ -65,10 +71,7 @@ const PharmacyList = ({ refreshKey = 0, onUpdate }) => {
 
   const saveEdit = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/api/pharmacies/${editData._id}`,
-        editData
-      );
+      await api.put(`/pharmacies/${editData._id}`, editData);
       closeEdit();
       fetchPharmacies();
     } catch (err) {
@@ -76,15 +79,36 @@ const PharmacyList = ({ refreshKey = 0, onUpdate }) => {
     }
   };
 
-  if (loading) return <p>Loading pharmacies...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) return <p className="loading-text">Loading pharmacies...</p>;
+  if (error) return <p className="error-text">{error}</p>;
+
+  if (pharmacies.length === 0) {
+    return (
+      <div className="empty-state fade-up">
+        <div className="empty-icon">🏪</div>
+        <h3>No pharmacies registered yet</h3>
+        <p>
+          {user?.role === "admin"
+            ? "Add your first pharmacy using the form above."
+            : "Check back soon, or explore the map to find pharmacies nearby."}
+        </p>
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil(pharmacies.length / PAGE_SIZE);
+  const paginatedPharmacies = pharmacies.slice(
+    (page - 1) * PAGE_SIZE,
+    page * PAGE_SIZE
+  );
 
   return (
     <div style={{ marginTop: "24px" }}>
-      <h3>Available Pharmacies</h3>
-
+      <p className="section-subtitle">
+        {pharmacies.length} pharmac{pharmacies.length === 1 ? "y" : "ies"} available
+      </p>
       <div className="results-grid">
-        {pharmacies.map((p) => (
+        {paginatedPharmacies.map((p) => (
           <PharmacyCard
             key={p._id}
             pharmacy={p}
@@ -94,37 +118,48 @@ const PharmacyList = ({ refreshKey = 0, onUpdate }) => {
         ))}
       </div>
 
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
       {/* Edit Modal */}
       {user?.role === "admin" && editData && (
-        <div className="modal-overlay" onClick={closeEdit}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Pharmacy</h3>
+        <Modal onClose={closeEdit}>
+          <h3>Edit Pharmacy</h3>
 
-            <label>Name</label>
-            <input name="name" value={editData.name} onChange={handleEditChange} />
+          <label>Name</label>
+          <input name="name" value={editData.name} onChange={handleEditChange} />
 
-            <label>Address</label>
-            <input name="address" value={editData.address} onChange={handleEditChange} />
+          <label>Address</label>
+          <input name="address" value={editData.address} onChange={handleEditChange} />
 
-            <label>Contact</label>
-            <input name="contact" value={editData.contact} onChange={handleEditChange} />
+          <label>Contact</label>
+          <input name="contact" value={editData.contact} onChange={handleEditChange} />
 
-            <h4>Medicines</h4>
+          <h4>Medicines</h4>
 
-            {editData.medicines?.map((m, idx) => (
-              <div key={idx} className="medicine-row">
-                <input name="name" value={m.name} onChange={(e) => handleMedicineChange(idx, e)} />
-                <input name="quantity" value={m.quantity} onChange={(e) => handleMedicineChange(idx, e)} />
-                <input name="price" value={m.price} onChange={(e) => handleMedicineChange(idx, e)} />
-                <button onClick={() => removeMedicineRow(idx)}>Remove</button>
-              </div>
-            ))}
+          {editData.medicines?.map((m, idx) => (
+            <div key={idx} className="medicine-row">
+              <input name="name" value={m.name} onChange={(e) => handleMedicineChange(idx, e)} />
+              <input name="quantity" value={m.quantity} onChange={(e) => handleMedicineChange(idx, e)} />
+              <input name="price" value={m.price} onChange={(e) => handleMedicineChange(idx, e)} />
+              <button onClick={() => removeMedicineRow(idx)} className="delete-btn">
+                Remove
+              </button>
+            </div>
+          ))}
 
-            <button onClick={addMedicineRow}>+ Add Medicine</button>
-            <button onClick={saveEdit}>Save</button>
-            <button onClick={closeEdit}>Cancel</button>
+          <button onClick={addMedicineRow} className="btn-outline modal-add-btn">
+            + Add Medicine
+          </button>
+
+          <div className="modal-actions">
+            <button onClick={closeEdit} className="secondary-btn">
+              Cancel
+            </button>
+            <button onClick={saveEdit} className="primary-btn">
+              Save
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

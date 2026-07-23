@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PasswordInput from "../components/PasswordInput";
 import "../styles/global.css";
 
 const Register = () => {
@@ -27,17 +28,14 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        form
-      );
+      const res = await api.post("/auth/register", form);
 
       showToast("Registered successfully 🎉");
 
       const userData = {
-        name: res.data.name,
-        email: res.data.email,
-        role: res.data.role,
+        name: res.data.user?.name,
+        email: res.data.user?.email,
+        role: res.data.user?.role,
         token: res.data.token,
       };
 
@@ -52,51 +50,73 @@ const Register = () => {
 
   return (
     <div className="auth-page fade-in">
-      <h2>🧍 Register</h2>
-
-      {/* Toast UI */}
       {toast && <div className="toast-box">{toast}</div>}
 
-      <form onSubmit={handleSubmit} className="auth-form">
-        <input
-          name="name"
-          placeholder="Full Name"
-          value={form.name}
-          onChange={handleChange}
-          required
-        />
+      <div className="auth-split">
+        <div className="auth-info fade-up">
+          <h1>Join MedFinder today</h1>
+          <p>
+            Create a free account to search medicines, compare pharmacy
+            prices, and check out in seconds — or register as a pharmacy
+            admin to list and manage your own stock.
+          </p>
+          <ul>
+            <li>
+              <span className="icon">⚡</span>
+              Fast checkout with saved details
+            </li>
+            <li>
+              <span className="icon">📦</span>
+              Order tracking from cart to confirmation
+            </li>
+            <li>
+              <span className="icon">🏪</span>
+              Pharmacy admin tools to manage inventory
+            </li>
+          </ul>
+        </div>
 
-        <input
-          name="email"
-          type="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
+        <form onSubmit={handleSubmit} className="auth-form">
+          <h2>🧍 Register</h2>
 
-        <input
-          name="password"
-          type="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
+          <input
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+          />
 
-        <select name="role" value={form.role} onChange={handleChange}>
-          <option value="customer">Customer</option>
-          <option value="admin">Admin</option>
-        </select>
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
 
-        <button type="submit" className="primary-btn">
-          Register
-        </button>
+          <PasswordInput
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
 
-        <p className="auth-switch">
-          Already have an account? <a href="/login">Login</a>
-        </p>
-      </form>
+          <select name="role" value={form.role} onChange={handleChange}>
+            <option value="customer">Customer</option>
+            <option value="admin">Admin</option>
+          </select>
+
+          <button type="submit" className="primary-btn">
+            Register
+          </button>
+
+          <p className="auth-switch">
+            Already have an account? <a href="/login">Login</a>
+          </p>
+        </form>
+      </div>
     </div>
   );
 };

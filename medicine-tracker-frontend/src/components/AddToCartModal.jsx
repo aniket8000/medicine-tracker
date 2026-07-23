@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Modal from "./Modal";
 import "../styles/global.css";
 
 const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
@@ -12,9 +13,8 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
   };
 
   return (
-    <div className="modal-overlay fade-in">
-      <div className="modal-content slide-up">
-        <h2>Add to Cart</h2>
+    <Modal onClose={onClose} className="slide-up">
+      <h2>Add to Cart</h2>
         <p>
           <strong>{medicine.name}</strong> <br />
           <small>From: {medicine.pharmacyName}</small> <br />
@@ -54,8 +54,7 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
             ❌ Cancel
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };
 

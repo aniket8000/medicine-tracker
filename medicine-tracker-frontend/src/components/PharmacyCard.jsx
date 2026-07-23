@@ -1,29 +1,18 @@
 // PharmacyCard.jsx
 import React, { useState } from "react";
+import Modal from "./Modal";
 
 const PharmacyCard = ({ pharmacy, onEdit, onDelete }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
-    <div
-      className="pharmacy-card"
-      style={{
-        background: "white",
-        borderRadius: "10px",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-        padding: "16px",
-        transition: "0.2s",
-        position: "relative",
-      }}
-    >
-      <h3 style={{ color: "#2563eb", marginBottom: "8px" }}>
-        {pharmacy.name}
-      </h3>
+    <div className="pharmacy-card">
+      <h3 className="pharmacy-card-title">{pharmacy.name}</h3>
 
       <p><strong>Address:</strong> {pharmacy.address || "N/A"}</p>
       <p><strong>Contact:</strong> {pharmacy.contact || "N/A"}</p>
 
-      <div style={{ marginTop: "8px", fontSize: "14px" }}>
+      <div className="pharmacy-card-medicines">
         <strong>Medicines:</strong>
         <div style={{ marginTop: "6px" }}>
           {pharmacy.medicines?.length ? (
@@ -33,41 +22,19 @@ const PharmacyCard = ({ pharmacy, onEdit, onDelete }) => {
               </div>
             ))
           ) : (
-            <div style={{ color: "#777" }}>No medicines</div>
+            <div className="pharmacy-card-empty">No medicines</div>
           )}
         </div>
       </div>
 
       {/* ACTION BUTTONS */}
       {typeof onEdit === "function" && (
-        <div style={{ marginTop: "12px", display: "flex", gap: "10px" }}>
-          {/* EDIT */}
-          <button
-            onClick={() => onEdit(pharmacy)}
-            style={{
-              background: "#2563eb",
-              color: "white",
-              padding: "6px 10px",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
+        <div className="pharmacy-card-actions">
+          <button onClick={() => onEdit(pharmacy)} className="btn-outline">
             ✏️ Edit
           </button>
 
-          {/* DELETE */}
-          <button
-            onClick={() => setShowConfirm(true)}
-            style={{
-              background: "#ef4444",
-              color: "white",
-              padding: "6px 10px",
-              borderRadius: "6px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={() => setShowConfirm(true)} className="delete-btn">
             ❌ Delete
           </button>
         </div>
@@ -75,59 +42,29 @@ const PharmacyCard = ({ pharmacy, onEdit, onDelete }) => {
 
       {/* DELETE CONFIRMATION MODAL */}
       {showConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.55)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 5000,
-          }}
+        <Modal
+          onClose={() => setShowConfirm(false)}
+          contentStyle={{ width: "320px", textAlign: "center" }}
         >
-          <div
-            style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "10px",
-              width: "300px",
-              textAlign: "center",
-            }}
-          >
-            <h3 style={{ marginBottom: "10px" }}>Delete Pharmacy?</h3>
-            <p style={{ marginBottom: "20px" }}>{pharmacy.name}</p>
+          <h3 style={{ marginBottom: "10px" }}>Delete Pharmacy?</h3>
+          <p style={{ marginBottom: "20px" }}>{pharmacy.name}</p>
 
-            <div style={{ display: "flex", justifyContent: "space-around" }}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={{
-                  padding: "6px 12px",
-                  background: "gray",
-                  color: "white",
-                  borderRadius: "6px",
-                }}
-              >
-                Cancel
-              </button>
+          <div className="modal-actions" style={{ justifyContent: "space-around" }}>
+            <button onClick={() => setShowConfirm(false)} className="secondary-btn">
+              Cancel
+            </button>
 
-              <button
-                onClick={() => {
-                  onDelete(pharmacy._id);
-                  setShowConfirm(false);
-                }}
-                style={{
-                  padding: "6px 12px",
-                  background: "#d11a2a",
-                  color: "white",
-                  borderRadius: "6px",
-                }}
-              >
-                Delete
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                onDelete(pharmacy._id);
+                setShowConfirm(false);
+              }}
+              className="delete-btn"
+            >
+              Delete
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

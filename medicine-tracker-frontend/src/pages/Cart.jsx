@@ -21,7 +21,14 @@ const Cart = () => {
       </header>
 
       {cart.length === 0 ? (
-        <p className="empty-cart">Your cart is empty.</p>
+        <div className="empty-state fade-up">
+          <div className="empty-icon">🛒</div>
+          <h3>Your cart is empty</h3>
+          <p>Browse medicines from nearby pharmacies and add them here.</p>
+          <button className="primary-btn" onClick={() => navigate("/medicines")}>
+            Browse Medicines
+          </button>
+        </div>
       ) : (
         <>
           <div className="cart-grid fade-up">

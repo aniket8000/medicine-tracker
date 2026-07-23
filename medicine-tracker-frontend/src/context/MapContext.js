@@ -6,9 +6,12 @@ export const useMapData = () => useContext(MapContext);
 
 export const MapProvider = ({ children }) => {
   const [nearbyPharmacies, setNearbyPharmacies] = useState([]);
+  const [userLocation, setUserLocation] = useState(null);
 
   return (
-    <MapContext.Provider value={{ nearbyPharmacies, setNearbyPharmacies }}>
+    <MapContext.Provider
+      value={{ nearbyPharmacies, setNearbyPharmacies, userLocation, setUserLocation }}
+    >
       {children}
     </MapContext.Provider>
   );

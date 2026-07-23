@@ -1,5 +1,5 @@
 // src/pages/MapView.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import L from "leaflet";
 import "../styles/global.css";
@@ -29,9 +29,16 @@ const MapView = () => {
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { setNearbyPharmacies } = useMapData();
+  const { setNearbyPharmacies, setUserLocation: setSharedUserLocation } = useMapData();
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    // Guards against React StrictMode's dev-only double effect invocation,
+    // which was firing two concurrent Overpass requests and letting a
+    // rate-limited second call overwrite the error state of a successful first.
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
     if (!navigator.geolocation) {
       setError("Geolocation not supported by your browser");
       setLoading(false);
@@ -42,6 +49,7 @@ const MapView = () => {
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         setUserLocation([latitude, longitude]);
+        setSharedUserLocation([latitude, longitude]);
         fetchNearbyPharmacies(latitude, longitude);
       },
       () => {
@@ -52,6 +60,7 @@ const MapView = () => {
   }, []);
 
   const fetchNearbyPharmacies = async (lat, lon) => {
+    setError("");
     try {
       const radius = 5000; // 5 km
       const query = `
@@ -61,6 +70,7 @@ const MapView = () => {
       `;
       const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`Overpass request failed (${res.status})`);
       const data = await res.json();
 
       const results = data.elements.map((el) => ({
@@ -95,6 +105,17 @@ const MapView = () => {
         Math.cos((lat2 * Math.PI) / 180) *
         Math.sin(dLon / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  // Passing our own GPS-based origin avoids Google Maps guessing your
+  // location via IP (which can be tens of km off) when the origin is left blank.
+  const directionsUrl = (p) => {
+    const params = new URLSearchParams({
+      api: "1",
+      destination: `${p.lat},${p.lon}`,
+    });
+    if (userLocation) params.set("origin", `${userLocation[0]},${userLocation[1]}`);
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
   };
 
   const sortedPharmacies = userLocation
@@ -151,7 +172,7 @@ const MapView = () => {
                   📍 {p.address} <br />
                   📏 {p.distance?.toFixed(2)} km away <br />
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`}
+                    href={directionsUrl(p)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: "#2563eb", fontWeight: "bold" }}
@@ -177,7 +198,7 @@ const MapView = () => {
                   <p><strong>Address:</strong> {p.address}</p>
                   <p className="distance">📏 {p.distance.toFixed(2)} km away</p>
                   <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`}
+                    href={directionsUrl(p)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="directions-btn"

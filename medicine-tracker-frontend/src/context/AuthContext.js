@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../api/axios";
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -7,6 +8,30 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(
     () => JSON.parse(localStorage.getItem("user")) || null
   );
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // Verify the stored token is still valid on app load — a stale/expired
+  // token (e.g. after a JWT secret rotation) should not render as logged in.
+  useEffect(() => {
+    const verifySession = async () => {
+      const stored = JSON.parse(localStorage.getItem("user"));
+      if (!stored?.token) {
+        setCheckingSession(false);
+        return;
+      }
+
+      try {
+        await api.get("/auth/me");
+      } catch {
+        localStorage.removeItem("user");
+        setUser(null);
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
+    verifySession();
+  }, []);
 
   // Toast
   const [toast, setToast] = useState({ show: false, message: "", type: "" });
@@ -42,7 +67,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, showToast }}>
+    <AuthContext.Provider value={{ user, login, logout, showToast, checkingSession }}>
       {children}
 
       {/* Toast UI */}

@@ -7,9 +7,18 @@ import "../styles/global.css";
 
 const Pharmacies = () => {
   const { user } = useAuth();
-  const { nearbyPharmacies } = useMapData(); // ✅ Now fetches from map context
+  const { nearbyPharmacies, userLocation } = useMapData(); // ✅ Now fetches from map context
   const [refreshKey, setRefreshKey] = useState(0);
   const refreshData = () => setRefreshKey((prev) => prev + 1);
+
+  const directionsUrl = (p) => {
+    const params = new URLSearchParams({
+      api: "1",
+      destination: `${p.lat},${p.lon}`,
+    });
+    if (userLocation) params.set("origin", `${userLocation[0]},${userLocation[1]}`);
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
+  };
 
   return (
     <div className="pharmacies-page fade-in">
@@ -45,7 +54,7 @@ const Pharmacies = () => {
                 <h4>{p.name}</h4>
                 <p><strong>Address:</strong> {p.address}</p>
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`}
+                  href={directionsUrl(p)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="directions-btn"
