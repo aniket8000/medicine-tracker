@@ -72,6 +72,11 @@ app.get("/", (req, res) => {
   res.send("Backend is running ");
 });
 
+// ---------- Health Check (for uptime monitors like UptimeRobot) ----------
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // ---------- Server Setup ----------
 const PORT = process.env.PORT || 5000;
 
