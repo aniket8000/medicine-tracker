@@ -10,7 +10,6 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
-    role: "customer",
   });
 
   const navigate = useNavigate();
@@ -57,8 +56,7 @@ const Register = () => {
           <h1>Join MedFinder today</h1>
           <p>
             Create a free account to search medicines, compare pharmacy
-            prices, and check out in seconds — or register as a pharmacy
-            admin to list and manage your own stock.
+            prices, and check out in seconds.
           </p>
           <ul>
             <li>
@@ -68,10 +66,6 @@ const Register = () => {
             <li>
               <span className="icon">📦</span>
               Order tracking from cart to confirmation
-            </li>
-            <li>
-              <span className="icon">🏪</span>
-              Pharmacy admin tools to manage inventory
             </li>
           </ul>
         </div>
@@ -102,11 +96,6 @@ const Register = () => {
             onChange={handleChange}
             required
           />
-
-          <select name="role" value={form.role} onChange={handleChange}>
-            <option value="customer">Customer</option>
-            <option value="admin">Admin</option>
-          </select>
 
           <button type="submit" className="primary-btn">
             Register

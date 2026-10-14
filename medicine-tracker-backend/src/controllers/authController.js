@@ -19,18 +19,21 @@ export const getMe = async (req, res) => {
 // Register
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ message: "User already exists" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Role is never taken from the client — every self-registration is a
+    // plain customer. Admin accounts must be created separately (e.g.
+    // directly in the database) so admin access can't be self-granted.
     const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
-      role,
+      role: "customer",
     });
 
     const token = jwt.sign(
