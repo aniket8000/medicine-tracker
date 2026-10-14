@@ -7,8 +7,15 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
 
   if (!medicine) return null;
 
+  // Keep the quantity a whole number between 1 and the available stock
+  const clampQty = (value) => {
+    const n = parseInt(value, 10);
+    if (Number.isNaN(n)) return 1;
+    return Math.max(1, Math.min(medicine.quantity, n));
+  };
+
   const handleAdd = () => {
-    onConfirm({ ...medicine, selectedQty: qty });
+    onConfirm({ ...medicine, selectedQty: clampQty(qty) });
     onClose();
   };
 
@@ -23,7 +30,7 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
 
         <div className="qty-controls">
           <button
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
+            onClick={() => setQty((q) => clampQty(clampQty(q) - 1))}
             className="qty-btn"
           >
             −
@@ -33,12 +40,16 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
             value={qty}
             min="1"
             max={medicine.quantity}
-            onChange={(e) => setQty(Math.min(medicine.quantity, e.target.value))}
+            // Allow the field to be briefly empty while typing; clamp otherwise
+            onChange={(e) =>
+              setQty(e.target.value === "" ? "" : clampQty(e.target.value))
+            }
+            onBlur={() => setQty(clampQty(qty))}
             className="qty-input"
           />
           <button
             onClick={() =>
-              setQty((q) => Math.min(medicine.quantity, q + 1))
+              setQty((q) => clampQty(clampQty(q) + 1))
             }
             className="qty-btn"
           >
@@ -48,7 +59,7 @@ const AddToCartModal = ({ medicine, onConfirm, onClose }) => {
 
         <div className="modal-actions">
           <button className="confirm-btn" onClick={handleAdd}>
-            ✅ Add {qty} to Cart
+            ✅ Add {clampQty(qty)} to Cart
           </button>
           <button className="cancel-btn" onClick={onClose}>
             ❌ Cancel

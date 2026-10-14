@@ -32,16 +32,12 @@ const Checkout = () => {
         name: form.name,
         contact: form.contact,
         address: form.address,
+        // Prices and the total are calculated by the server from live stock
         items: cart.map((item) => ({
+          pharmacyId: item.pharmacyId,
           name: item.name,
-          pharmacyName: item.pharmacyName,
           quantity: item.quantity || 1,
-          price: item.price,
         })),
-        total: cart.reduce(
-          (sum, item) => sum + item.price * (item.quantity || 1),
-          0
-        ),
       });
 
       setConfirmedOrder(res.data);
@@ -49,7 +45,11 @@ const Checkout = () => {
       clearCart();
     } catch (err) {
       console.error("Order save failed:", err.message);
-      setOrderError("Something went wrong placing your order. Please try again.");
+      // Show the server's reason (e.g. "Only 3 of X left in stock") when there is one
+      setOrderError(
+        err.response?.data?.message ||
+          "Something went wrong placing your order. Please try again."
+      );
     } finally {
       setIsProcessing(false);
     }

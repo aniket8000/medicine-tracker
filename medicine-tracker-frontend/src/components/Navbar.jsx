@@ -8,7 +8,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
 
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -37,6 +37,7 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
+    clearCart(); // don't leave this user's cart for the next person on this browser
     logout();
     showToast("Logged out successfully ✅");
     navigate("/login");

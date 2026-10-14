@@ -50,7 +50,7 @@ const Cart = () => {
                 <p className="address">{item.address}</p>
                 <button
                   className="remove-btn"
-                  onClick={() => removeFromCart(item.name)}
+                  onClick={() => removeFromCart(item.name, item.pharmacyName)}
                 >
                   ❌ Remove
                 </button>

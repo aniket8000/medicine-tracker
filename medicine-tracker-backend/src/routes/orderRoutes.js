@@ -11,12 +11,14 @@ const createOrderRules = [
   body("contact").trim().notEmpty().withMessage("Contact is required"),
   body("address").trim().notEmpty().withMessage("Address is required"),
   body("items").isArray({ min: 1 }).withMessage("Order must contain at least one item"),
+  body("items.*.pharmacyId").isMongoId().withMessage("Invalid pharmacy for item"),
   body("items.*.name").trim().notEmpty().withMessage("Item name is required"),
   body("items.*.quantity")
-    .isFloat({ min: 1 })
-    .withMessage("Item quantity must be at least 1"),
-  body("items.*.price").isFloat({ min: 0 }).withMessage("Item price must be a non-negative number"),
-  body("total").isFloat({ min: 0 }).withMessage("Total must be a non-negative number"),
+    .isInt({ min: 1 })
+    .withMessage("Item quantity must be a whole number of at least 1")
+    .toInt(),
+  // Item prices and the order total are calculated server-side from the
+  // pharmacy's stock; any values the client sends are ignored.
 ];
 
 router.post("/", protect, createOrderRules, validate, createOrder);

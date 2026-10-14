@@ -106,6 +106,7 @@ const Medicines = () => {
 
     addToCart({
       ...medicine,
+      stock: medicine.quantity, // `quantity` below becomes the cart quantity
       quantity: selectedQuantity,
       totalPrice: medicine.price * selectedQuantity,
     });
@@ -118,7 +119,9 @@ const Medicines = () => {
     try {
       const { pharmacyId, medName } = deleteModal;
 
-      await api.delete(`/pharmacies/${pharmacyId}/medicine/${medName}`);
+      await api.delete(
+        `/pharmacies/${pharmacyId}/medicine/${encodeURIComponent(medName)}`
+      );
 
       setDeleteModal({ visible: false, medName: "", pharmacyId: "" });
 

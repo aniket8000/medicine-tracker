@@ -1,6 +1,10 @@
+// Load .env variables first — ES module imports are evaluated before this
+// file's body runs, so modules like utils/mailer.js that read process.env at
+// import time would otherwise see undefined values.
+import "dotenv/config";
+
 // Import required dependencies
 import express from "express";          // Web framework for API routes
-import dotenv from "dotenv";            // Load .env variables
 import cors from "cors";                // Allow frontend to access backend
 import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js"; // MongoDB connection logic
@@ -10,11 +14,16 @@ import orderRoutes from "./routes/orderRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 
 
-// Load environment variables early
-dotenv.config();
-
 // Create express app instance
 const app = express();
+
+// Behind a hosting proxy (Render, Heroku, etc.) every request arrives from the
+// proxy's IP, so rate limits would be shared by all users. Set TRUST_PROXY to
+// the number of proxy hops in front of the app (usually 1) on the host only —
+// leaving it unset locally stops clients from spoofing X-Forwarded-For.
+if (process.env.TRUST_PROXY) {
+  app.set("trust proxy", Number(process.env.TRUST_PROXY) || 1);
+}
 
 // ---------- Middlewares ----------
 app.use(
@@ -36,12 +45,15 @@ app.use(
   })
 );
 
-// Stricter limit on auth endpoints to slow down brute-force attempts
+// Stricter limit on auth endpoints to slow down brute-force attempts.
+// /me is skipped — the frontend calls it on every page load to verify the
+// session, and it shouldn't eat into the login/register budget.
 app.use(
   "/api/auth",
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
+    skip: (req) => req.path === "/me",
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Too many auth attempts, please try again later." },

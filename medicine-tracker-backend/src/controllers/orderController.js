@@ -1,21 +1,58 @@
 import Order from "../models/orderModel.js";
+import Pharmacy from "../models/pharmacyModel.js";
 import User from "../models/userModel.js";
 import { sendOrderConfirmationEmail } from "../utils/mailer.js";
 
 // Create a new order (customer, must be logged in)
 export const createOrder = async (req, res) => {
   try {
-    const { name, contact, address, items, total } = req.body;
+    const { name, contact, address, items } = req.body;
 
     if (!items || items.length === 0)
       return res.status(400).json({ message: "Order must contain at least one item" });
+
+    // Prices and stock are always read from the database — any price/total
+    // sent by the client is ignored so an order can't be placed at a
+    // tampered price.
+    const pharmacyIds = [...new Set(items.map((item) => item.pharmacyId))];
+    const pharmacies = await Pharmacy.find({ _id: { $in: pharmacyIds } });
+    const pharmacyById = new Map(pharmacies.map((p) => [p._id.toString(), p]));
+
+    const orderItems = [];
+    for (const item of items) {
+      const pharmacy = pharmacyById.get(item.pharmacyId);
+      const medicine = pharmacy?.medicines.find((m) => m.name === item.name);
+
+      if (!medicine)
+        return res.status(400).json({
+          message: `${item.name} is no longer available${pharmacy ? ` at ${pharmacy.name}` : ""}`,
+        });
+
+      if (item.quantity > medicine.quantity)
+        return res.status(400).json({
+          message: `Only ${medicine.quantity} of ${medicine.name} left in stock at ${pharmacy.name}`,
+        });
+
+      orderItems.push({
+        name: medicine.name,
+        pharmacyId: pharmacy._id,
+        pharmacyName: pharmacy.name,
+        quantity: item.quantity,
+        price: medicine.price,
+      });
+    }
+
+    const total =
+      Math.round(
+        orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) * 100
+      ) / 100;
 
     const order = await Order.create({
       user: req.user.id,
       name,
       contact,
       address,
-      items,
+      items: orderItems,
       total,
     });
 
